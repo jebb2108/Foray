@@ -10,10 +10,12 @@
     "type-check": "tsc --noEmit",
     "ios:sync": "npm run build && npx cap sync ios",
     "ios:open": "npx cap open ios",
-    "ios:run": "npx cap run ios"
+    "ios:run": "npx cap run ios",
+    "ios:build": "npm run ios:sync && xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator -derivedDataPath .build/ios CODE_SIGNING_ALLOWED=NO build"
   },
   "dependencies": {
     "@capacitor/core": "^5.0.0",
+    "@capacitor/ios": "^5.7.8",
     "@ionic/react": "^7.0.0",
     "@ionic/react-router": "^7.0.0",
     "ionicons": "^7.0.0",

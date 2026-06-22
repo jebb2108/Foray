@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import {
   IonIcon,
   IonLabel,
@@ -11,28 +10,21 @@ import {
   chatbubblesOutline,
   peopleOutline,
   personCircleOutline,
-} from 'ionicons/icons';
+} from '../shared/icons';
 import { Redirect, Route } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
-import {
-  createLocalChat,
-  createLocalId,
-  loadLocalChats,
-  LocalChat,
-  LocalMessage,
-  saveLocalChats,
-} from '../data/localChats';
-import { LocalUserProfile, NewLocalUserProfile } from '../data/localUser';
-import ChatConversation from '../pages/ChatConversation';
-import Chats from '../pages/Chats';
-import Profile from '../pages/Profile';
-import WaitingRoom from '../pages/WaitingRoom';
-import './MainTabs.scss';
+import { useMessagingStore } from '../features/messaging/hooks/useMessagingStore';
+import ChatConversation from '../features/messaging/pages/ChatConversation';
+import Chats from '../features/messaging/pages/Chats';
+import { UserProfile, UserProfileChanges } from '../features/profile/model/userProfile';
+import Profile from '../features/profile/pages/Profile';
+import WaitingRoom from '../features/waiting-room/pages/WaitingRoom';
+import './styles/MainTabs.scss';
 
 interface MainTabsProps {
-  user: LocalUserProfile;
+  user: UserProfile;
   onResetProfile: () => void;
-  onUpdateProfile: (changes: Partial<NewLocalUserProfile>) => void;
+  onUpdateProfile: (changes: UserProfileChanges) => void;
 }
 
 export default function MainTabs({
@@ -41,152 +33,8 @@ export default function MainTabs({
   onUpdateProfile,
 }: MainTabsProps) {
   const location = useLocation();
-  const [chats, setChats] = useState<LocalChat[]>(() => loadLocalChats());
-
-  useEffect(() => {
-    saveLocalChats(chats);
-  }, [chats]);
-
-  const openChat = (chatId: string) => {
-    setChats((current) => {
-      const target = current.find((chat) => chat.id === chatId);
-      if (!target || target.unread === 0) {
-        return current;
-      }
-
-      return current.map((chat) => chat.id === chatId ? { ...chat, unread: 0 } : chat);
-    });
-  };
-
-  const sendMessage = (
-    chatId: string,
-    text: string,
-    replyTo?: LocalMessage['replyTo'],
-    messageId?: string,
-  ) => {
-    const targetChat = chats.find((chat) => chat.id === chatId);
-    const newMessage: LocalMessage = {
-      id: messageId ?? createLocalId(),
-      text: text.trim(),
-      sender: 'me',
-      createdAt: new Date().toISOString(),
-      status: targetChat?.isSaved ? 'read' : 'sent',
-      replyTo,
-    };
-
-    setChats((current) =>
-      current.map((chat) =>
-        chat.id === chatId
-          ? {
-              ...chat,
-              unread: 0,
-              messages: [...(Array.isArray(chat.messages) ? chat.messages : []), newMessage],
-            }
-          : chat,
-      ),
-    );
-
-    if (!targetChat?.isSaved) {
-      window.setTimeout(() => {
-        setChats((current) =>
-          current.map((chat) =>
-            chat.id === chatId
-              ? {
-                  ...chat,
-                  messages: chat.messages.map((message) =>
-                    message.id === newMessage.id
-                      ? { ...message, status: 'read' }
-                      : message,
-                  ),
-                }
-              : chat,
-          ),
-        );
-      }, 1_200);
-    }
-  };
-
-  const editMessage = (chatId: string, messageId: string, text: string) => {
-    setChats((current) =>
-      current.map((chat) =>
-        chat.id === chatId
-          ? {
-              ...chat,
-              messages: chat.messages.map((message) =>
-                message.id === messageId ? { ...message, text: text.trim() } : message,
-              ),
-            }
-          : chat,
-      ),
-    );
-  };
-
-  const deleteMessage = (chatId: string, messageId: string) => {
-    setChats((current) =>
-      current.map((chat) =>
-        chat.id === chatId
-          ? {
-              ...chat,
-              messages: chat.messages.filter((message) => message.id !== messageId),
-            }
-          : chat,
-      ),
-    );
-  };
-
-  const reactToMessage = (chatId: string, messageId: string, reaction: string) => {
-    setChats((current) =>
-      current.map((chat) =>
-        chat.id === chatId
-          ? {
-              ...chat,
-              messages: chat.messages.map((message) =>
-                message.id === messageId
-                  ? {
-                      ...message,
-                      reaction: message.reaction === reaction ? undefined : reaction,
-                    }
-                  : message,
-              ),
-            }
-          : chat,
-      ),
-    );
-  };
-
-  const saveMessage = (text: string) => {
-    const savedMessage: LocalMessage = {
-      id: createLocalId(),
-      text,
-      sender: 'me',
-      createdAt: new Date().toISOString(),
-      status: 'read',
-    };
-
-    setChats((current) =>
-      current.map((chat) =>
-        chat.id === 'saved'
-          ? { ...chat, messages: [...chat.messages, savedMessage] }
-          : chat,
-      ),
-    );
-  };
-
-  const createChat = (name: string, color: string): LocalChat => {
-    const chat = createLocalChat(name, color);
-    setChats((current) => [...current, chat]);
-    return chat;
-  };
-
-  const clearChat = (chatId: string) => {
-    setChats((current) =>
-      current.map((chat) => chat.id === chatId ? { ...chat, messages: [] } : chat),
-    );
-  };
-
-  const deleteChat = (chatId: string) => {
-    setChats((current) => current.filter((chat) => chat.id !== chatId));
-  };
+  const messaging = useMessagingStore(user.id);
+  const { chats, messages } = messaging.state;
 
   const isConversationOpen = location.pathname.startsWith('/chats/');
 
@@ -197,19 +45,25 @@ export default function MainTabs({
           <WaitingRoom user={user} />
         </Route>
         <Route exact path="/chats">
-          <Chats user={user} chats={chats} onCreateChat={createChat} />
+          <Chats
+            user={user}
+            chats={chats}
+            messages={messages}
+            onCreateChat={messaging.createChat}
+          />
         </Route>
         <Route exact path="/chats/:chatId">
           <ChatConversation
             chats={chats}
-            onOpenChat={openChat}
-            onSendMessage={sendMessage}
-            onEditMessage={editMessage}
-            onDeleteMessage={deleteMessage}
-            onReactToMessage={reactToMessage}
-            onSaveMessage={saveMessage}
-            onClearChat={clearChat}
-            onDeleteChat={deleteChat}
+            messages={messages}
+            onOpenChat={messaging.openChat}
+            onSendMessage={messaging.sendMessage}
+            onEditMessage={messaging.editMessage}
+            onDeleteMessage={messaging.deleteMessage}
+            onReactToMessage={messaging.reactToMessage}
+            onSaveMessage={messaging.saveMessage}
+            onClearChat={messaging.clearChat}
+            onDeleteChat={messaging.deleteChat}
           />
         </Route>
         <Route exact path="/profile">
