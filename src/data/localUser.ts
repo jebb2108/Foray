@@ -36,3 +36,16 @@ export function saveLocalUser(profile: NewLocalUserProfile): LocalUserProfile {
 export function removeLocalUser(): void {
   localStorage.removeItem(USER_STORAGE_KEY);
 }
+
+export function updateLocalUser(
+  current: LocalUserProfile,
+  changes: Partial<NewLocalUserProfile>,
+): LocalUserProfile {
+  const updatedUser: LocalUserProfile = {
+    ...current,
+    ...changes,
+  };
+
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+  return updatedUser;
+}

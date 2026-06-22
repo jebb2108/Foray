@@ -5,6 +5,7 @@ import {
   loadLocalUser,
   LocalUserProfile,
   removeLocalUser,
+  updateLocalUser,
 } from '../data/localUser';
 import SignUp from '../pages/SignUp';
 import MainTabs from './MainTabs';
@@ -28,7 +29,15 @@ export function AppRoutes() {
     setUser(null);
   };
 
+  const updateProfile = (changes: Parameters<typeof updateLocalUser>[1]) => {
+    setUser((current) => current ? updateLocalUser(current, changes) : current);
+  };
+
   return (
-    <MainTabs user={user} onResetProfile={resetProfile} />
+    <MainTabs
+      user={user}
+      onResetProfile={resetProfile}
+      onUpdateProfile={updateProfile}
+    />
   );
 }
