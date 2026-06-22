@@ -1,0 +1,6 @@
+{
+  "appId": "com.foray.app",
+  "appName": "Foray",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
