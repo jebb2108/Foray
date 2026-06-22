@@ -213,26 +213,14 @@ $app-border: #d2d5c5;
   flex-direction: column;
 }
 
-.waiting-status-dot {
-  width: 11px;
-  height: 11px;
-  margin-right: 8px;
-  border: 2px solid $app-primary;
-  border-radius: 50%;
-
-  &.is-active {
-    background: $app-primary;
-    box-shadow: 0 0 0 6px rgba(96, 122, 82, 0.12);
-  }
-}
-
 .waiting-content {
   display: flex;
   flex: 1;
   align-items: center;
   flex-direction: column;
   justify-content: center;
-  padding: 10px 0 28px;
+  padding: 42px 0 0;
+  transform: translateY(18px);
   text-align: center;
 }
 
@@ -289,17 +277,6 @@ $app-border: #d2d5c5;
   }
 }
 
-.waiting-copy__icon {
-  display: inline-grid;
-  width: 38px;
-  height: 38px;
-  place-items: center;
-  border-radius: 50%;
-  background: #e3eadc;
-  color: $app-primary;
-  font-size: 20px;
-}
-
 .waiting-action {
   display: flex;
   width: min(100%, 344px);
@@ -319,12 +296,6 @@ $app-border: #d2d5c5;
     background: transparent;
     color: $app-primary-active;
   }
-}
-
-.waiting-note {
-  margin: 13px 0 0;
-  color: #92978b;
-  font-size: 12px;
 }
 
 .profile-edit-button {
@@ -494,6 +465,11 @@ $app-border: #d2d5c5;
 }
 
 @media (max-height: 720px) {
+  .waiting-content {
+    padding-top: 24px;
+    transform: translateY(10px);
+  }
+
   .waiting-illustration {
     width: min(100%, 300px);
   }

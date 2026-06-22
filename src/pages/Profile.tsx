@@ -56,17 +56,17 @@ export default function Profile({ user, onResetProfile }: ProfileProps) {
 
           <section className="profile-section">
             <div className="profile-info-row">
-              <span className="profile-info-row__icon"><IonIcon icon={personOutline} /></span>
-              <span>
-                <small>О себе</small>
-                <strong>{user.bio || 'Расскажите немного о себе'}</strong>
-              </span>
-            </div>
-            <div className="profile-info-row">
               <span className="profile-info-row__icon"><IonIcon icon={locationOutline} /></span>
               <span>
                 <small>Город</small>
                 <strong>{user.city || 'Не указан'}</strong>
+              </span>
+            </div>
+            <div className="profile-info-row">
+              <span className="profile-info-row__icon"><IonIcon icon={personOutline} /></span>
+              <span>
+                <small>О себе</small>
+                <strong>{user.bio || 'Расскажите немного о себе'}</strong>
               </span>
             </div>
           </section>

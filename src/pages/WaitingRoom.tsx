@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { IonContent, IonIcon, IonPage } from '@ionic/react';
 import {
   closeOutline,
-  peopleOutline,
   searchOutline,
 } from 'ionicons/icons';
 import emptyRoom from '../assets/waiting-room/empty-room.jpeg';
@@ -47,7 +46,6 @@ export default function WaitingRoom({ user }: WaitingRoomProps) {
               <span className="messenger-header__eyebrow">Комната</span>
               <h1>Ожидание</h1>
             </div>
-            <span className={`waiting-status-dot${isSearching ? ' is-active' : ''}`} />
           </header>
 
           <section className="waiting-content">
@@ -65,9 +63,6 @@ export default function WaitingRoom({ user }: WaitingRoomProps) {
             </button>
 
             <div className="waiting-copy">
-              <span className="waiting-copy__icon">
-                <IonIcon icon={isSearching ? searchOutline : peopleOutline} />
-              </span>
               <h2>{isSearching ? 'Ищем собеседника' : `${user.name}, комната готова`}</h2>
               <p>
                 {isSearching
@@ -84,12 +79,6 @@ export default function WaitingRoom({ user }: WaitingRoomProps) {
               <IonIcon icon={isSearching ? closeOutline : searchOutline} />
               {isSearching ? 'Выйти из очереди' : 'Найти собеседника'}
             </button>
-
-            {isSearching && (
-              <p className="waiting-note">
-                Поиск продолжится, пока вы находитесь в комнате ожидания.
-              </p>
-            )}
           </section>
         </main>
       </IonContent>

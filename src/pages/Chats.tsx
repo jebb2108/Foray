@@ -62,6 +62,8 @@ const CHAT_PREVIEWS: ChatPreview[] = [
 ];
 
 export default function Chats({ user }: ChatsProps) {
+  const hasRegularChats = CHAT_PREVIEWS.some((chat) => chat.id !== 'saved');
+
   return (
     <IonPage className="messenger-page">
       <IonContent fullscreen>
@@ -104,9 +106,11 @@ export default function Chats({ user }: ChatsProps) {
             ))}
           </section>
 
-          <p className="chat-list__hint">
-            Привет, {user.name}. Новые собеседники появятся здесь после совпадения.
-          </p>
+          {!hasRegularChats && (
+            <p className="chat-list__hint">
+              Привет, {user.name}. Новые собеседники появятся здесь после совпадения.
+            </p>
+          )}
         </main>
       </IonContent>
     </IonPage>
