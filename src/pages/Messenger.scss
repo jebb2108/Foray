@@ -1,0 +1,508 @@
+$app-primary: #607a52;
+$app-primary-active: #4d6541;
+$app-background: #f1f1e6;
+$app-surface: #fbfbf5;
+$app-text: #30352c;
+$app-text-secondary: #74796d;
+$app-border: #d2d5c5;
+
+.messenger-page {
+  --ion-background-color: #{$app-background};
+  --ion-text-color: #{$app-text};
+
+  ion-content {
+    --background: #{$app-background};
+    --padding-bottom: calc(74px + env(safe-area-inset-bottom));
+  }
+}
+
+.messenger-screen {
+  width: min(100%, 560px);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: max(20px, env(safe-area-inset-top)) 16px 30px;
+}
+
+.messenger-header {
+  display: flex;
+  min-height: 62px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 12px;
+
+  h1 {
+    margin: 1px 0 0;
+    color: $app-text;
+    font-size: 30px;
+    font-weight: 720;
+    letter-spacing: -0.035em;
+  }
+}
+
+.messenger-header__eyebrow {
+  color: $app-primary;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.messenger-icon-button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: $app-primary;
+  font-size: 26px;
+}
+
+.messenger-search {
+  display: flex;
+  height: 40px;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 12px;
+  padding: 0 13px;
+  border: 1px solid rgba(96, 122, 82, 0.1);
+  border-radius: 12px;
+  background: rgba(210, 213, 197, 0.46);
+  color: $app-text-secondary;
+
+  ion-icon {
+    flex: 0 0 auto;
+    font-size: 19px;
+  }
+
+  input {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: $app-text;
+    font: inherit;
+    font-size: 15px;
+
+    &::placeholder {
+      color: #8f9488;
+    }
+  }
+}
+
+.chat-list {
+  overflow: hidden;
+  border: 1px solid rgba(96, 122, 82, 0.12);
+  border-radius: 16px;
+  background: rgba(251, 251, 245, 0.72);
+}
+
+.chat-row {
+  display: flex;
+  width: 100%;
+  min-height: 76px;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+
+  & + & {
+    .chat-row__body {
+      border-top: 1px solid rgba(96, 122, 82, 0.12);
+    }
+  }
+}
+
+.chat-avatar {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 21px;
+  font-weight: 650;
+}
+
+.chat-row__body {
+  display: flex;
+  min-width: 0;
+  min-height: 66px;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.chat-row__top,
+.chat-row__bottom {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chat-row__top {
+  strong {
+    overflow: hidden;
+    color: $app-text;
+    font-size: 16px;
+    font-weight: 650;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.chat-row__time {
+  flex: 0 0 auto;
+  color: #92978b;
+  font-size: 12px;
+}
+
+.chat-row__message {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 3px;
+  overflow: hidden;
+  color: $app-text-secondary;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  ion-icon {
+    flex: 0 0 auto;
+    color: $app-primary;
+    font-size: 16px;
+  }
+}
+
+.chat-unread {
+  display: grid;
+  min-width: 21px;
+  height: 21px;
+  flex: 0 0 auto;
+  padding: 0 6px;
+  place-items: center;
+  border-radius: 999px;
+  background: $app-primary;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.chat-list__hint {
+  max-width: 310px;
+  margin: 24px auto 0;
+  color: #92978b;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.waiting-screen {
+  display: flex;
+  flex-direction: column;
+}
+
+.waiting-status-dot {
+  width: 11px;
+  height: 11px;
+  margin-right: 8px;
+  border: 2px solid $app-primary;
+  border-radius: 50%;
+
+  &.is-active {
+    background: $app-primary;
+    box-shadow: 0 0 0 6px rgba(96, 122, 82, 0.12);
+  }
+}
+
+.waiting-content {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10px 0 28px;
+  text-align: center;
+}
+
+.waiting-illustration {
+  position: relative;
+  width: min(100%, 344px);
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid rgba(96, 122, 82, 0.2);
+  border-radius: 24px;
+  background: $app-surface;
+  box-shadow: 0 18px 42px rgba(48, 53, 44, 0.1);
+
+  &::after {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    content: '';
+    pointer-events: none;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 220ms ease, transform 500ms ease;
+  }
+
+  &.is-searching img {
+    transform: scale(1.015);
+  }
+}
+
+.waiting-copy {
+  max-width: 340px;
+  margin-top: 27px;
+
+  h2 {
+    margin: 10px 0 7px;
+    color: $app-text;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    min-height: 44px;
+    margin: 0;
+    color: $app-text-secondary;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+.waiting-copy__icon {
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e3eadc;
+  color: $app-primary;
+  font-size: 20px;
+}
+
+.waiting-action {
+  display: flex;
+  width: min(100%, 344px);
+  height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 25px;
+  border: 1px solid $app-primary;
+  border-radius: 13px;
+  background: $app-primary;
+  color: white;
+  font-size: 15px;
+  font-weight: 650;
+
+  &.is-cancel {
+    background: transparent;
+    color: $app-primary-active;
+  }
+}
+
+.waiting-note {
+  margin: 13px 0 0;
+  color: #92978b;
+  font-size: 12px;
+}
+
+.profile-edit-button {
+  padding: 8px 4px;
+  border: 0;
+  background: transparent;
+  color: $app-primary;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.profile-hero {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  padding: 12px 0 24px;
+  text-align: center;
+
+  h2 {
+    margin: 13px 0 3px;
+    color: $app-text;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+
+  p {
+    margin: 0;
+    color: $app-text-secondary;
+    font-size: 14px;
+  }
+}
+
+.profile-avatar {
+  display: grid;
+  width: 96px;
+  height: 96px;
+  place-items: center;
+  border: 4px solid rgba(251, 251, 245, 0.8);
+  border-radius: 50%;
+  background: $app-primary;
+  box-shadow: 0 10px 28px rgba(96, 122, 82, 0.22);
+  color: white;
+  font-size: 30px;
+  font-weight: 680;
+}
+
+.profile-section {
+  overflow: hidden;
+  margin-bottom: 14px;
+  border: 1px solid rgba(96, 122, 82, 0.12);
+  border-radius: 16px;
+  background: rgba(251, 251, 245, 0.76);
+}
+
+.profile-info-row {
+  display: flex;
+  min-height: 67px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+
+  & + & {
+    border-top: 1px solid rgba(96, 122, 82, 0.12);
+  }
+
+  > span:last-child {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+  }
+
+  small {
+    color: $app-text-secondary;
+    font-size: 12px;
+  }
+
+  strong {
+    overflow: hidden;
+    color: $app-text;
+    font-size: 15px;
+    font-weight: 520;
+    text-overflow: ellipsis;
+  }
+}
+
+.profile-info-row__icon,
+.profile-menu__icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: #e3eadc;
+  color: $app-primary;
+  font-size: 19px;
+}
+
+.profile-interests {
+  padding: 15px;
+
+  h3 {
+    margin: 0 0 12px;
+    color: $app-text;
+    font-size: 15px;
+    font-weight: 650;
+  }
+
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  span {
+    padding: 7px 10px;
+    border: 1px solid $app-border;
+    border-radius: 10px;
+    background: $app-surface;
+    color: $app-primary-active;
+    font-size: 12px;
+    font-weight: 550;
+  }
+}
+
+.profile-menu {
+  button {
+    display: grid;
+    width: 100%;
+    min-height: 54px;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 11px;
+    padding: 8px 12px;
+    border: 0;
+    background: transparent;
+    color: $app-text;
+    font-size: 15px;
+    text-align: left;
+
+    & + button {
+      border-top: 1px solid rgba(96, 122, 82, 0.12);
+    }
+
+    > ion-icon {
+      color: #a0a498;
+      font-size: 18px;
+    }
+  }
+}
+
+.profile-logout {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 8px;
+  border: 1px solid rgba(157, 74, 62, 0.22);
+  border-radius: 14px;
+  background: rgba(251, 251, 245, 0.6);
+  color: #9d4a3e;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@media (max-height: 720px) {
+  .waiting-illustration {
+    width: min(100%, 300px);
+  }
+
+  .waiting-copy {
+    margin-top: 18px;
+  }
+
+  .waiting-action {
+    margin-top: 17px;
+  }
+}

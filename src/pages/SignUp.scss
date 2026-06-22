@@ -247,39 +247,77 @@ $signup-border: #d2d5c5;
   border: 0;
 }
 
-.signup-interests legend {
-  margin-bottom: 10px;
-  color: #4e4e47;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.signup-interests > div {
+.signup-interest-cloud {
   display: grid;
+  width: 100%;
+  max-width: 346px;
+  min-height: 230px;
+  margin: 0 auto;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  grid-auto-rows: 48px;
+  align-content: center;
+  gap: 9px;
+  padding: 16px 0;
 }
 
-.signup-interests button {
+.signup-interest-chip,
+.signup-interest-placeholder {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.signup-interest-chip {
   display: flex;
   min-height: 48px;
+  max-width: 100%;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 5px;
   padding: 0 12px;
   border: 1px solid $signup-border;
-  border-radius: 12px;
+  border-radius: 14px;
   background: $signup-surface;
   color: #44515e;
   font-size: 14px;
   font-weight: 550;
+  line-height: 1.2;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, color 150ms ease,
+    transform 150ms ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &--group {
+    font-weight: 650;
+  }
+
+  &--subgroup {
+    background: rgba(251, 251, 245, 0.72);
+  }
+
+  &--row-fill {
+    width: calc(50% - 4.5px);
+    justify-self: center;
+    grid-column: 1 / -1;
+  }
+
+  &.is-selected {
+    border-color: $signup-primary;
+    background: #e3eadc;
+    color: #46613b;
+    font-weight: 650;
+  }
 }
 
-.signup-interests button.is-selected {
-  border-color: $signup-primary;
-  background: #e3eadc;
-  color: #46613b;
+.signup-interest-placeholder {
+  height: 48px;
+  visibility: hidden;
 }
 
 .signup-error {
@@ -309,6 +347,23 @@ $signup-border: #d2d5c5;
 .signup-submit::part(native) {
   padding-right: 20px;
   padding-left: 20px;
+}
+
+.signup-submit.button-disabled {
+  opacity: 1;
+  --background: #c6cbbf;
+  --color: #f7f7f1;
+}
+
+.signup-submit--back {
+  --background: transparent;
+  --background-activated: rgba(96, 122, 82, 0.08);
+  --color: #{$signup-primary};
+  --border-color: #{$signup-primary};
+  --border-style: solid;
+  --border-width: 1px;
+  --border-radius: 12px;
+  --box-shadow: none;
 }
 
 .signup-privacy {

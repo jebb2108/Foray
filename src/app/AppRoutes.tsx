@@ -6,12 +6,8 @@ import {
   LocalUserProfile,
   removeLocalUser,
 } from '../data/localUser';
-import Discover from '../pages/Discover';
-import Events from '../pages/Events';
-import Home from '../pages/Home';
-import Profile from '../pages/Profile';
-import Settings from '../pages/Settings';
 import SignUp from '../pages/SignUp';
+import MainTabs from './MainTabs';
 
 export function AppRoutes() {
   const [user, setUser] = useState<LocalUserProfile | null>(() => loadLocalUser());
@@ -33,15 +29,6 @@ export function AppRoutes() {
   };
 
   return (
-    <IonRouterOutlet>
-      <Route exact path="/">
-        <Home user={user} onResetProfile={resetProfile} />
-      </Route>
-      <Route exact path="/discover" component={Discover} />
-      <Route exact path="/events" component={Events} />
-      <Route exact path="/profile" component={Profile} />
-      <Route exact path="/settings" component={Settings} />
-      <Redirect to="/" />
-    </IonRouterOutlet>
+    <MainTabs user={user} onResetProfile={resetProfile} />
   );
 }
