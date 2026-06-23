@@ -1,4 +1,5 @@
 import { FormEvent, PointerEvent as ReactPointerEvent, RefObject } from 'react';
+import './TemporaryRoomChat.scss';
 import { IonIcon } from '@ionic/react';
 import {
   arrowBackOutline,

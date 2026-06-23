@@ -6,36 +6,21 @@ import {
   useRef,
   useState,
 } from 'react';
-import { IonContent, IonIcon, IonPage } from '@ionic/react';
-import {
-  arrowBackOutline,
-  bookmarkOutline,
-  checkmarkDoneOutline,
-  checkmarkOutline,
-  chevronDownOutline,
-  chevronUpOutline,
-  closeOutline,
-  copyOutline,
-  createOutline,
-  ellipsisHorizontalOutline,
-  flagOutline,
-  logOutOutline,
-  paperPlane,
-  returnUpBackOutline,
-  shareSocialOutline,
-  trashOutline,
-} from '../../../shared/icons';
+import { IonContent, IonPage } from '@ionic/react';
 import { useHistory, useParams } from 'react-router-dom';
 import { copyText } from '../../../shared/lib/clipboard';
-import { formatTime } from '../../../shared/lib/date';
 import { Chat } from '../model/chat';
 import {
   ForayMessage,
   getMessageText,
-  getSelectedReaction,
   MessageReplyReference,
 } from '../model/message';
+import ConversationHeader from '../components/ConversationHeader';
+import ConversationMenu from '../components/ConversationMenu';
+import MessageActionsSheet from '../components/MessageActionsSheet';
+import MessageBubble from '../components/MessageBubble';
 import '../../../styles/messenger.scss';
+import './ChatConversation.scss';
 
 interface ChatConversationProps {
   chats: Chat[];
@@ -68,45 +53,6 @@ function createReplyReference(message: ForayMessage): MessageReplyReference {
     senderId: message.sender.id,
     previewText: getMessageText(message),
   };
-}
-
-function chatSubtitle(chat: Chat): string | null {
-  if (chat.isBlocked) {
-    return 'заблокирован';
-  }
-  if (chat.type === 'saved') {
-    return 'Личные заметки';
-  }
-  if (chat.type === 'group') {
-    return formatMemberCount(chat.participantIds.length + 1, 'участник', 'участника', 'участников');
-  }
-  if (chat.type === 'channel') {
-    return formatMemberCount(
-      chat.participantIds.length + 1,
-      'подписчик',
-      'подписчика',
-      'подписчиков',
-    );
-  }
-  return chat.isOnline ? 'в сети' : 'был(а) недавно';
-}
-
-function formatMemberCount(
-  count: number,
-  one: string,
-  few: string,
-  many: string,
-): string {
-  const lastTwoDigits = count % 100;
-  const lastDigit = count % 10;
-  const suffix = lastTwoDigits >= 11 && lastTwoDigits <= 14
-    ? many
-    : lastDigit === 1
-      ? one
-      : lastDigit >= 2 && lastDigit <= 4
-        ? few
-        : many;
-  return `${count} ${suffix}`;
 }
 
 export default function ChatConversation({
@@ -153,6 +99,7 @@ export default function ChatConversation({
       ...pendingMessages.filter((message) => !storedIds.has(message.id)),
     ];
   }, [pendingMessages, storedMessages]);
+
   const firstRealMessage = useMemo(
     () => visibleMessages.find((message) => message.sender.type !== 'system'),
     [visibleMessages],
@@ -169,31 +116,21 @@ export default function ChatConversation({
   );
 
   useEffect(() => {
-    if (chat) {
-      onOpenChat(chat.id);
-    }
+    if (chat) onOpenChat(chat.id);
   }, [chat?.id, onOpenChat]);
 
   useEffect(() => {
     const messagesElement = messagesRef.current;
-    if (!messagesElement) {
-      return;
-    }
-
+    if (!messagesElement) return;
     const frame = window.requestAnimationFrame(() => {
       messagesElement.scrollTop = messagesElement.scrollHeight;
     });
-
     return () => window.cancelAnimationFrame(frame);
   }, [visibleMessages.length]);
 
   useEffect(() => {
-    if (pendingMessages.length === 0) {
-      return;
-    }
-
+    if (pendingMessages.length === 0) return;
     const storedIds = new Set(storedMessages.map((message) => message.id));
-
     // Подтверждённые сообщения удаляются из локальной очереди
     setPendingMessages((current) =>
       current.filter((message) => !storedIds.has(message.id)));
@@ -223,9 +160,7 @@ export default function ChatConversation({
 
   const submitMessage = (event: FormEvent) => {
     event.preventDefault();
-    if (!text.trim() || chat.isBlocked) {
-      return;
-    }
+    if (!text.trim() || chat.isBlocked) return;
 
     if (editingMessage) {
       onEditMessage(chat.id, editingMessage.id, text);
@@ -244,10 +179,7 @@ export default function ChatConversation({
     setText('');
   };
 
-  const startLongPress = (
-    message: ForayMessage,
-    event: ReactPointerEvent<HTMLDivElement>,
-  ) => {
+  const startLongPress = (message: ForayMessage, event: ReactPointerEvent<HTMLDivElement>) => {
     cancelLongPress();
     longPressTriggeredRef.current = false;
     pointerMovedRef.current = false;
@@ -264,10 +196,7 @@ export default function ChatConversation({
 
   const trackPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const start = pointerStartRef.current;
-    if (!start) {
-      return;
-    }
-
+    if (!start) return;
     // Небольшое движение пальца не отменяет удержание
     if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 8) {
       pointerMovedRef.current = true;
@@ -294,99 +223,46 @@ export default function ChatConversation({
       lastTapRef.current = null;
       return;
     }
-
     lastTapRef.current = { messageId: message.id, time: now };
   };
 
   const chooseReaction = (reaction: string) => {
-    if (!selectedMessage) {
-      return;
-    }
+    if (!selectedMessage) return;
     onReactToMessage(chat.id, selectedMessage.id, reaction);
     setSelectedMessage(null);
     setShowAllReactions(false);
   };
 
   const copySelectedMessage = async () => {
-    if (!selectedMessage) {
-      return;
-    }
-
+    if (!selectedMessage) return;
     await copyText(getMessageText(selectedMessage));
     setSelectedMessage(null);
   };
 
   const beginReply = () => {
-    if (!selectedMessage) {
-      return;
-    }
+    if (!selectedMessage) return;
     setReplyTo(selectedMessage);
     setEditingMessage(null);
     setSelectedMessage(null);
   };
 
   const beginEdit = () => {
-    if (!selectedMessage) {
-      return;
-    }
+    if (!selectedMessage) return;
     setEditingMessage(selectedMessage);
     setReplyTo(null);
     setText(getMessageText(selectedMessage));
     setSelectedMessage(null);
   };
 
-  const shareCommunity = async () => {
-    const communityType = chat.type === 'channel' ? 'канал' : 'группу';
-    const textToShare = `Присоединяйтесь в ${communityType} «${chat.title}» в Foray`;
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: chat.title,
-          text: textToShare,
-          url: window.location.href,
-        });
-      } else {
-        await copyText(`${textToShare}\n${window.location.href}`);
-      }
-      setShowMenu(false);
-    } catch {
-      // Закрытие системного меню отправки не меняет состояние чата
-    }
-  };
-
-  const leaveCommunity = () => {
-    onDeleteChat(chat.id);
-    setShowMenu(false);
-    history.replace('/chats');
-  };
-
   return (
     <IonPage className="messenger-page conversation-page">
       <IonContent fullscreen>
         <main className="conversation-screen">
-          <header className="conversation-header">
-            <button type="button" onClick={() => history.push('/chats')} aria-label="Назад к чатам">
-              <IonIcon icon={arrowBackOutline} />
-            </button>
-            <span className="chat-avatar" style={{ background: chat.avatar.color }}>
-              {chat.avatar.initials}
-            </span>
-            <span className="conversation-header__title">
-              <strong>{chat.title}</strong>
-              {chatSubtitle(chat) && (
-                <small className={chat.type === 'direct'
-                  ? chat.isOnline
-                    ? 'online-status'
-                    : 'offline-status'
-                  : ''}>
-                  {chatSubtitle(chat)}
-                </small>
-              )}
-            </span>
-            <button type="button" aria-label="Меню чата" onClick={() => setShowMenu(true)}>
-              <IonIcon icon={ellipsisHorizontalOutline} />
-            </button>
-          </header>
+          <ConversationHeader
+            chat={chat}
+            onBack={() => history.push('/chats')}
+            onOpenMenu={() => setShowMenu(true)}
+          />
 
           <section
             className="conversation-messages"
@@ -402,70 +278,24 @@ export default function ChatConversation({
                 </button>
               </div>
             )}
-            {visibleMessages.map((message) => {
-              const messageText = getMessageText(message);
-              const selectedReaction = getSelectedReaction(message);
-              return (
-                <div
-                  className={[
-                    'message-bubble',
-                    message.sender.type === 'system' ? 'is-system' : '',
-                    message.isOutgoing ? 'is-mine' : 'is-other',
-                    selectedReaction ? 'has-reaction' : '',
-                  ].filter(Boolean).join(' ')}
-                  key={message.id}
-                  onPointerDown={(event) => startLongPress(message, event)}
-                  onPointerUp={() => finishMessagePress(message)}
-                  onPointerCancel={cancelLongPress}
-                  onPointerLeave={cancelLongPress}
-                  onPointerMove={trackPointerMove}
-                  onContextMenu={(event) => {
-                    event.preventDefault();
-                    cancelLongPress();
-                    setSelectedMessage(message);
-                  }}
-                >
-                  {message.replyTo && (
-                    <span className="message-reply-quote">
-                      <strong>
-                        {message.replyTo.senderId === chat.peerId ? chat.title : 'Вы'}
-                      </strong>
-                      <span>{message.replyTo.previewText}</span>
-                    </span>
-                  )}
-                  <span>{messageText}</span>
-                  <small className="message-meta">
-                    <span>{formatTime(message.sentAt)}</span>
-                    {message.isOutgoing && (
-                      <IonIcon
-                        className={`message-status is-${message.delivery.state}`}
-                        icon={message.delivery.state === 'sent'
-                          ? checkmarkOutline
-                          : checkmarkDoneOutline}
-                        aria-label={message.delivery.state === 'read'
-                          ? 'Прочитано'
-                          : 'Отправлено'}
-                      />
-                    )}
-                  </small>
-                  {selectedReaction && (
-                    <button
-                      type="button"
-                      className="message-reaction"
-                      onPointerDown={(event) => event.stopPropagation()}
-                      onPointerUp={(event) => event.stopPropagation()}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onReactToMessage(chat.id, message.id, selectedReaction);
-                      }}
-                      aria-label={`Убрать реакцию ${selectedReaction}`}
-                    >
-                      {selectedReaction}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+            {visibleMessages.map((message) => (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                peerId={chat.peerId}
+                peerTitle={chat.title}
+                onPointerDown={(event) => startLongPress(message, event)}
+                onPointerUp={() => finishMessagePress(message)}
+                onPointerCancel={cancelLongPress}
+                onPointerLeave={cancelLongPress}
+                onPointerMove={trackPointerMove}
+                onContextMenu={() => {
+                  cancelLongPress();
+                  setSelectedMessage(message);
+                }}
+                onReactToMessage={(reaction) => onReactToMessage(chat.id, message.id, reaction)}
+              />
+            ))}
           </section>
 
           <form className="message-composer" onSubmit={submitMessage}>
@@ -483,177 +313,71 @@ export default function ChatConversation({
                     setText('');
                   }}
                   aria-label="Отменить"
-                >
-                  <IonIcon icon={closeOutline} />
-                </button>
+                />
               </div>
             )}
             <input
               value={text}
               onChange={(event) => setText(event.target.value)}
-              placeholder={chat.isBlocked
-                ? 'Пользователь заблокирован'
-                : chat.type === 'saved'
-                  ? 'Новая заметка'
-                  : 'Сообщение'}
+              placeholder={
+                chat.isBlocked
+                  ? 'Пользователь заблокирован'
+                  : chat.type === 'saved'
+                    ? 'Новая заметка'
+                    : 'Сообщение'
+              }
               disabled={chat.isBlocked}
               aria-label="Текст сообщения"
               autoComplete="off"
             />
-            <button type="submit" disabled={chat.isBlocked || !text.trim()} aria-label="Отправить">
-              <IonIcon icon={paperPlane} />
-            </button>
+            <button
+              type="submit"
+              disabled={chat.isBlocked || !text.trim()}
+              aria-label="Отправить"
+            />
           </form>
         </main>
 
         {showMenu && (
-          <div className="messenger-overlay" role="presentation" onClick={() => setShowMenu(false)}>
-            <section
-              className="messenger-sheet conversation-menu"
-              role="dialog"
-              aria-modal="true"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <header>
-                <div>
-                  <span>{chat.title}</span>
-                  <small>
-                    {chat.type === 'group'
-                      ? 'Управление группой'
-                      : chat.type === 'channel'
-                        ? 'Управление каналом'
-                        : 'Управление диалогом'}
-                  </small>
-                </div>
-                <button type="button" onClick={() => setShowMenu(false)} aria-label="Закрыть">
-                  <IonIcon icon={closeOutline} />
-                </button>
-              </header>
-              {(chat.type === 'group' || chat.type === 'channel') && (
-                <button type="button" onClick={shareCommunity}>
-                  <IonIcon icon={shareSocialOutline} />
-                  Поделиться
-                </button>
-              )}
-              {(chat.type === 'group' || chat.type === 'channel') ? (
-                <button type="button" onClick={() => setShowMenu(false)}>
-                  <IonIcon icon={flagOutline} />
-                  Пожаловаться
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClearChat(chat.id);
-                    setShowMenu(false);
-                  }}
-                >
-                  Очистить историю
-                </button>
-              )}
-              {(chat.type === 'group' || chat.type === 'channel') ? (
-                <button type="button" className="is-danger" onClick={leaveCommunity}>
-                  <IonIcon icon={logOutOutline} />
-                  {chat.type === 'channel' ? 'Покинуть канал' : 'Покинуть группу'}
-                </button>
-              ) : chat.type !== 'saved' && (
-                <button
-                  type="button"
-                  className="is-danger"
-                  onClick={() => {
-                    onDeleteChat(chat.id);
-                    history.replace('/chats');
-                  }}
-                >
-                  <IonIcon icon={trashOutline} />
-                  Удалить чат
-                </button>
-              )}
-            </section>
-          </div>
+          <ConversationMenu
+            chat={chat}
+            onClose={() => setShowMenu(false)}
+            onClearChat={() => onClearChat(chat.id)}
+            onDeleteChat={() => {
+              onDeleteChat(chat.id);
+              history.replace('/chats');
+            }}
+            onLeave={() => {
+              onDeleteChat(chat.id);
+              setShowMenu(false);
+              history.replace('/chats');
+            }}
+          />
         )}
 
         {selectedMessage && (
-          <div
-            className="messenger-overlay"
-            role="presentation"
-            onClick={() => {
+          <MessageActionsSheet
+            message={selectedMessage}
+            chatType={chat.type}
+            showAllReactions={showAllReactions}
+            onClose={() => {
               setSelectedMessage(null);
               setShowAllReactions(false);
             }}
-          >
-            <section
-              className="messenger-sheet message-actions"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Действия с сообщением"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className={`reaction-picker${showAllReactions ? ' is-expanded' : ''}`}>
-                {(showAllReactions
-                  ? ['❤️', '👍', '🔥', '😂', '🎉', '😮', '😢', '👏', '🤔', '👎']
-                  : ['❤️', '👍', '🔥', '😂', '🎉']
-                ).map((reaction) => (
-                  <button
-                    type="button"
-                    key={reaction}
-                    onClick={() => chooseReaction(reaction)}
-                    aria-label={`Реакция ${reaction}`}
-                  >
-                    {reaction}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  className="reaction-picker__more"
-                  onClick={() => setShowAllReactions((current) => !current)}
-                  aria-label={showAllReactions ? 'Свернуть реакции' : 'Больше реакций'}
-                >
-                  <IonIcon icon={showAllReactions ? chevronUpOutline : chevronDownOutline} />
-                </button>
-              </div>
-              <p>{getMessageText(selectedMessage)}</p>
-              <button type="button" onClick={beginReply}>
-                <IonIcon icon={returnUpBackOutline} />
-                Ответить
-              </button>
-              <button type="button" onClick={copySelectedMessage}>
-                <IonIcon icon={copyOutline} />
-                Копировать
-              </button>
-              {chat.type !== 'saved' && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onSaveMessage(selectedMessage);
-                    setSelectedMessage(null);
-                  }}
-                >
-                  <IonIcon icon={bookmarkOutline} />
-                  Сохранить в Избранное
-                </button>
-              )}
-              {selectedMessage.permissions.canBeEdited && (
-                <button type="button" onClick={beginEdit}>
-                  <IonIcon icon={createOutline} />
-                  Изменить
-                </button>
-              )}
-              {selectedMessage.permissions.canBeDeleted && (
-                <button
-                  type="button"
-                  className="is-danger"
-                  onClick={() => {
-                    onDeleteMessage(chat.id, selectedMessage.id);
-                    setSelectedMessage(null);
-                  }}
-                >
-                  <IonIcon icon={trashOutline} />
-                  Удалить
-                </button>
-              )}
-            </section>
-          </div>
+            onToggleAllReactions={() => setShowAllReactions((current) => !current)}
+            onChooseReaction={chooseReaction}
+            onReply={beginReply}
+            onCopy={copySelectedMessage}
+            onSave={() => {
+              onSaveMessage(selectedMessage);
+              setSelectedMessage(null);
+            }}
+            onEdit={beginEdit}
+            onDelete={() => {
+              onDeleteMessage(chat.id, selectedMessage.id);
+              setSelectedMessage(null);
+            }}
+          />
         )}
       </IonContent>
     </IonPage>

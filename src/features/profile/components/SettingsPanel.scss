@@ -1,0 +1,108 @@
+@use '../../../styles/theme' as *;
+
+.settings-panel {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding: max(10px, env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));
+  background: $app-background;
+
+  > header {
+    display: grid;
+    min-height: 52px;
+    grid-template-columns: 64px 1fr 64px;
+    align-items: center;
+    margin-bottom: 14px;
+    text-align: center;
+
+    > button {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      place-items: center;
+      border: 0;
+      background: transparent;
+      color: $app-primary;
+      font: inherit;
+      font-size: 15px;
+
+      &:first-child {
+        justify-self: start;
+        font-size: 23px;
+      }
+    }
+
+    strong {
+      color: $app-text;
+      font-size: 17px;
+    }
+  }
+}
+
+.setting-switch-row {
+  display: flex;
+  width: 100%;
+  min-height: 69px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 13px;
+  border: 1px solid rgba(96, 122, 82, 0.12);
+  background: $app-surface;
+  color: $app-text;
+  text-align: left;
+
+  &:first-of-type {
+    border-radius: 15px 15px 0 0;
+  }
+
+  & + & {
+    border-top: 0;
+    border-radius: 0 0 15px 15px;
+  }
+
+  > span:first-child {
+    display: grid;
+    gap: 3px;
+  }
+
+  strong {
+    font-size: 15px;
+  }
+
+  small {
+    color: $app-text-secondary;
+    font-size: 12px;
+  }
+}
+
+.setting-switch {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #c5c9be;
+  transition: background 160ms ease;
+
+  span {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 1px 4px rgba(48, 53, 44, 0.2);
+    transition: transform 160ms ease;
+  }
+
+  &.is-on {
+    background: $app-primary;
+
+    span {
+      transform: translateX(20px);
+    }
+  }
+}

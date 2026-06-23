@@ -1,0 +1,132 @@
+@use '../../../styles/theme' as *;
+
+.waiting-screen {
+  display: flex;
+  flex-direction: column;
+
+  &.is-room-chat {
+    padding: 0;
+  }
+}
+
+.waiting-content {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  padding: 42px 0 0;
+  transform: translateY(18px);
+  text-align: center;
+
+  &.is-room-chat {
+    min-height: 100%;
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+    transform: none;
+    text-align: left;
+  }
+}
+
+.waiting-illustration {
+  position: relative;
+  width: min(100%, 344px);
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid rgba(96, 122, 82, 0.2);
+  border-radius: 24px;
+  background: $app-surface;
+  box-shadow: 0 18px 42px rgba(48, 53, 44, 0.1);
+
+  &::after {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    content: '';
+    pointer-events: none;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 220ms ease, transform 500ms ease;
+  }
+
+  &.is-searching img {
+    transform: scale(1.015);
+  }
+
+  &.is-found {
+    border-color: rgba(96, 122, 82, 0.42);
+    box-shadow: 0 18px 44px rgba(96, 122, 82, 0.2);
+
+    img {
+      transform: scale(1.01);
+    }
+  }
+}
+
+.waiting-copy {
+  max-width: 340px;
+  margin-top: 27px;
+
+  h2 {
+    margin: 10px 0 7px;
+    color: $app-text;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    min-height: 44px;
+    margin: 0;
+    color: $app-text-secondary;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+.waiting-action {
+  display: flex;
+  width: min(100%, 344px);
+  height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 25px;
+  border: 1px solid $app-primary;
+  border-radius: 13px;
+  background: $app-primary;
+  color: white;
+  font-size: 15px;
+  font-weight: 650;
+
+  &.is-cancel {
+    background: transparent;
+    color: $app-primary-active;
+  }
+}
+
+@media (max-height: 720px) {
+  .waiting-content {
+    padding-top: 24px;
+    transform: translateY(10px);
+  }
+
+  .waiting-illustration {
+    width: min(100%, 300px);
+  }
+
+  .waiting-copy {
+    margin-top: 18px;
+  }
+
+  .waiting-action {
+    margin-top: 17px;
+  }
+}

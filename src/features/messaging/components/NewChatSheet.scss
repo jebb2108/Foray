@@ -1,0 +1,268 @@
+@use '../../../styles/theme' as *;
+
+.new-chat-sheet {
+  max-height: min(720px, calc(100vh - 36px));
+  overflow-y: auto;
+}
+
+.new-chat-search {
+  margin: 0 0 12px;
+}
+
+.new-chat-actions {
+  overflow: hidden;
+  margin-bottom: 15px;
+  border: 1px solid rgba(96, 122, 82, 0.12);
+  border-radius: 15px;
+
+  > button {
+    display: grid;
+    width: 100%;
+    min-height: 54px;
+    grid-template-columns: 36px 1fr;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 11px;
+    border: 0;
+    background: transparent;
+    color: $app-text;
+    text-align: left;
+
+    & + button {
+      border-top: 1px solid rgba(96, 122, 82, 0.12);
+    }
+
+    > span {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: 10px;
+      background: #e3eadc;
+      color: $app-primary;
+      font-size: 19px;
+    }
+
+    strong {
+      font-size: 15px;
+      font-weight: 600;
+    }
+  }
+}
+
+.new-chat-section-title {
+  display: block;
+  margin: 0 5px 7px;
+  color: $app-text-secondary !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+.new-chat-list {
+  overflow: hidden;
+  border: 1px solid rgba(96, 122, 82, 0.12);
+  border-radius: 15px;
+
+  > button {
+    display: flex;
+    width: 100%;
+    min-height: 67px;
+    align-items: center;
+    gap: 12px;
+    padding: 7px 10px;
+    border: 0;
+    background: transparent;
+    color: $app-text;
+    text-align: left;
+
+    & + button {
+      border-top: 1px solid rgba(96, 122, 82, 0.12);
+    }
+
+    > span:last-child {
+      display: grid;
+      gap: 3px;
+    }
+
+    strong {
+      font-size: 15px;
+    }
+
+    small {
+      color: $app-text-secondary;
+      font-size: 12px;
+    }
+  }
+}
+
+.new-chat-empty {
+  margin: 0;
+  padding: 24px 12px;
+  color: $app-text-secondary;
+  font-size: 13px;
+  text-align: center;
+}
+
+.new-community-form {
+  display: grid;
+  gap: 16px;
+  padding: 4px 2px 2px;
+
+  > label {
+    display: grid;
+    gap: 7px;
+    color: $app-text-secondary;
+    font-size: 13px;
+  }
+
+  > label > input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 48px;
+    padding: 0 13px;
+    border: 1px solid $app-border;
+    border-radius: 12px;
+    outline: 0;
+    background: $app-surface;
+    color: $app-text;
+    font: inherit;
+    font-size: 16px;
+
+    &:focus {
+      border-color: $app-primary;
+    }
+  }
+
+  > div {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 9px;
+
+    button {
+      min-height: 46px;
+      border: 1px solid $app-primary;
+      border-radius: 12px;
+      background: transparent;
+      color: $app-primary;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 620;
+
+      &[type='submit'] {
+        background: $app-primary;
+        color: white;
+      }
+
+      &:disabled {
+        border-color: #c6cbbf;
+        background: #c6cbbf;
+        color: #f7f7f1;
+      }
+    }
+  }
+}
+
+.new-community-search {
+  display: flex;
+  width: 100%;
+  height: 40px;
+  margin: 0;
+
+  input {
+    height: auto;
+  }
+}
+
+.new-community-participants {
+  display: grid;
+  gap: 9px;
+
+  > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    strong {
+      color: $app-text-secondary;
+      font-size: 13px;
+      font-weight: 400;
+    }
+
+    span {
+      color: $app-text-secondary;
+      font-size: 11px;
+    }
+  }
+}
+
+.new-community-participant-list {
+  max-height: 230px;
+  overflow-y: auto;
+  border: 1px solid rgba(96, 122, 82, 0.12);
+  border-radius: 14px;
+
+  > button {
+    display: grid;
+    width: 100%;
+    min-height: 62px;
+    grid-template-columns: 44px 1fr 24px;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border: 0;
+    background: transparent;
+    color: $app-text;
+    text-align: left;
+
+    & + button {
+      border-top: 1px solid rgba(96, 122, 82, 0.1);
+    }
+
+    .chat-avatar {
+      width: 42px;
+      height: 42px;
+      font-size: 16px;
+    }
+
+    > span:nth-child(2) {
+      display: grid;
+      min-width: 0;
+      gap: 2px;
+    }
+
+    strong,
+    small {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    strong {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    small {
+      color: $app-text-secondary;
+      font-size: 11px;
+    }
+
+    &.is-selected {
+      background: rgba(227, 234, 220, 0.56);
+    }
+  }
+}
+
+.participant-selection {
+  box-sizing: border-box;
+  width: 21px;
+  height: 21px;
+  border: 1px solid $app-border;
+  border-radius: 50%;
+  background: $app-surface;
+
+  .is-selected & {
+    border: 6px solid $app-primary;
+  }
+}

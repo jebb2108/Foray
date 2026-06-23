@@ -1,0 +1,219 @@
+@use '../../../styles/theme' as *;
+
+.profile-editor {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding: max(10px, env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));
+  background: $app-background;
+
+  > header {
+    display: grid;
+    min-height: 52px;
+    grid-template-columns: 64px 1fr 64px;
+    align-items: center;
+    margin-bottom: 14px;
+    text-align: center;
+
+    > button {
+      border: 0;
+      background: transparent;
+      color: $app-primary;
+      font: inherit;
+      font-size: 15px;
+
+      &:first-child {
+        justify-self: start;
+        font-size: 23px;
+      }
+
+      &:last-child {
+        justify-self: end;
+        font-weight: 650;
+      }
+    }
+
+    strong {
+      color: $app-text;
+      font-size: 17px;
+    }
+  }
+
+  label {
+    display: grid;
+    gap: 7px;
+    margin-bottom: 14px;
+    color: $app-text-secondary;
+    font-size: 13px;
+
+    input,
+    textarea {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 12px 13px;
+      border: 1px solid $app-border;
+      border-radius: 12px;
+      outline: 0;
+      background: $app-surface;
+      color: $app-text;
+      font: inherit;
+      font-size: 15px;
+
+      &:focus {
+        border-color: $app-primary;
+      }
+    }
+
+    input {
+      height: 48px;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+  }
+}
+
+.profile-interest-editor {
+  margin: 3px 0 14px;
+  border: 1px solid rgba(96, 122, 82, 0.14);
+  border-radius: 14px;
+  background: $app-surface;
+
+  summary {
+    display: flex;
+    min-height: 56px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 13px;
+    color: $app-text;
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    > span:first-child {
+      display: grid;
+      gap: 2px;
+    }
+
+    strong {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    small,
+    > span:last-child {
+      color: $app-text-secondary;
+      font-size: 12px;
+    }
+  }
+
+  &[open] summary {
+    border-bottom: 1px solid rgba(96, 122, 82, 0.12);
+  }
+}
+
+.profile-interest-editor__content {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.profile-interest-category-page {
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.profile-interest-pagination {
+  display: flex;
+  min-height: 18px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  button {
+    width: 7px;
+    height: 7px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #c6cbbf;
+    transition: width 150ms ease, background 150ms ease;
+
+    &.is-active {
+      width: 18px;
+      border-radius: 999px;
+      background: $app-primary;
+    }
+  }
+}
+
+.profile-interest-category {
+  overflow: hidden;
+  border: 1px solid rgba(96, 122, 82, 0.12);
+  border-radius: 12px;
+
+  h3 {
+    margin: 0;
+    padding: 9px 11px;
+    background: rgba(210, 213, 197, 0.58);
+    color: $app-text;
+    font-size: 13px;
+    font-weight: 650;
+  }
+}
+
+.profile-interest-subgroup {
+  padding: 10px;
+
+  & + & {
+    border-top: 1px solid rgba(96, 122, 82, 0.1);
+  }
+
+  > span {
+    display: block;
+    margin-bottom: 7px;
+    color: $app-text-secondary;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  button {
+    min-height: 32px;
+    padding: 0 9px;
+    border: 1px solid $app-border;
+    border-radius: 9px;
+    background: $app-surface;
+    color: $app-text-secondary;
+    font: inherit;
+    font-size: 12px;
+
+    &.is-selected {
+      border-color: $app-primary;
+      background: #e3eadc;
+      color: $app-primary-active;
+      font-weight: 620;
+    }
+
+    &:disabled {
+      opacity: 0.42;
+    }
+  }
+}
+
+.profile-editor__error {
+  margin: 0 0 12px;
+  color: #9d4a3e;
+  font-size: 13px;
+  text-align: center;
+}

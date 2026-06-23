@@ -1,0 +1,52 @@
+@use '../../../styles/theme' as *;
+
+.match-consent-dialog {
+  width: min(100%, 350px);
+  padding: 20px;
+  border: 1px solid rgba(96, 122, 82, 0.16);
+  border-radius: 20px;
+  background: $app-surface;
+  box-shadow: 0 24px 70px rgba(48, 53, 44, 0.24);
+  color: $app-text;
+  text-align: center;
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 19px;
+  }
+
+  p {
+    margin: 0;
+    color: $app-text-secondary;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  > div {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+    margin-top: 18px;
+
+    button {
+      display: flex;
+      min-height: 45px;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid $app-primary;
+      border-radius: 12px;
+      background: $app-primary;
+      color: white;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 620;
+
+      &.is-danger {
+        border-color: rgba(157, 74, 62, 0.3);
+        background: transparent;
+        color: #9d4a3e;
+      }
+    }
+  }
+}

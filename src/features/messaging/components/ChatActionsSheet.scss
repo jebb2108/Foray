@@ -1,0 +1,35 @@
+@use '../../../styles/theme' as *;
+
+.chat-actions {
+  .chat-actions__header-spacer {
+    width: 36px;
+    height: 36px;
+  }
+
+  > button {
+    display: flex;
+    width: 100%;
+    min-height: 49px;
+    align-items: center;
+    gap: 12px;
+    padding: 0 13px;
+    border: 0;
+    border-top: 1px solid rgba(96, 122, 82, 0.11);
+    background: transparent;
+    color: $app-text;
+    font: inherit;
+    font-size: 15px;
+    text-align: left;
+
+    ion-icon {
+      width: 22px;
+      color: $app-primary;
+      font-size: 20px;
+    }
+
+    &.is-danger,
+    &.is-danger ion-icon {
+      color: #9d4a3e;
+    }
+  }
+}
