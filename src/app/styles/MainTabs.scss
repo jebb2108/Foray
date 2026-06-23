@@ -10,14 +10,17 @@ $app-text-secondary: #74796d;
 }
 
 .main-tab-bar {
-  height: calc(58px + env(safe-area-inset-bottom));
+  height: 53px;
   padding: 4px 10px env(safe-area-inset-bottom);
+  --min-height: 0;
   border-top: 1px solid rgba(96, 122, 82, 0.16);
   background: rgba(251, 251, 245, 0.96);
   box-shadow: 0 -8px 24px rgba(48, 53, 44, 0.04);
   backdrop-filter: blur(18px);
 
   ion-tab-button {
+    height: 100%;
+    min-height: 0;
     --background: transparent;
     --color: #{$app-text-secondary};
     --color-selected: #{$app-primary};
@@ -41,4 +44,11 @@ $app-text-secondary: #74796d;
     pointer-events: none;
     transform: translateY(100%);
   }
+}
+
+body.temporary-room-open .main-tab-bar {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(100%);
 }

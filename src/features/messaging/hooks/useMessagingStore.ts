@@ -10,10 +10,12 @@ import {
 } from '../model/message';
 import { MessagingState } from '../model/messagingState';
 import {
-  createDirectChat,
+  createNewChat,
   loadMessagingState,
   saveMessagingState,
 } from '../repository/messagingRepository';
+import { updateChatPreference } from '../repository/chatPreferencesRepository';
+import { messagingApi } from '../api/messagingApi';
 
 export interface MessagingStore {
   state: MessagingState;
@@ -28,9 +30,28 @@ export interface MessagingStore {
   deleteMessage: (chatId: string, messageId: string) => void;
   reactToMessage: (chatId: string, messageId: string, emoji: string) => void;
   saveMessage: (message: ForayMessage) => void;
-  createChat: (name: string, color: string) => Chat;
+  createChat: (
+    name: string,
+    color: string,
+    type?: Exclude<Chat['type'], 'saved'>,
+    participantIds?: string[],
+  ) => Chat;
+  createMatchedChat: (
+    name: string,
+    color: string,
+    transcript: Array<{
+      text: string;
+      isOutgoing: boolean;
+      sentAt: string;
+    }>,
+  ) => Chat;
   clearChat: (chatId: string) => void;
   deleteChat: (chatId: string) => void;
+  blockChat: (chatId: string) => void;
+  reportSpam: (chatId: string) => void;
+  toggleChatPinned: (chatId: string) => void;
+  muteChat: (chatId: string, durationMs?: number) => void;
+  unmuteChat: (chatId: string) => void;
 }
 
 export function useMessagingStore(selfUserId: string): MessagingStore {
@@ -52,6 +73,37 @@ export function useMessagingStore(selfUserId: string): MessagingStore {
     readTimers.current.forEach((timer) => window.clearTimeout(timer));
     readTimers.current.clear();
   }, []);
+
+  useEffect(() => {
+    const expirationTimes = state.chats
+      .filter((chat) => chat.isMuted && chat.mutedUntil)
+      .map((chat) => Date.parse(chat.mutedUntil as string))
+      .filter((timestamp) => Number.isFinite(timestamp) && timestamp > Date.now());
+    if (expirationTimes.length === 0) {
+      return undefined;
+    }
+
+    const delay = Math.max(0, Math.min(...expirationTimes) - Date.now());
+    const timer = window.setTimeout(() => {
+      const now = Date.now();
+      setState((current) => ({
+        ...current,
+        chats: current.chats.map((chat) =>
+          chat.isMuted && chat.mutedUntil && Date.parse(chat.mutedUntil) <= now
+            ? {
+                ...chat,
+                isMuted: false,
+                mutedUntil: null,
+              }
+            : chat),
+      }));
+      stateRef.current.chats
+        .filter((chat) => chat.isMuted && chat.mutedUntil && Date.parse(chat.mutedUntil) <= now)
+        .forEach((chat) => updateChatPreference(chat.id, { isMuted: false, mutedUntil: null }));
+    }, delay + 50);
+
+    return () => window.clearTimeout(timer);
+  }, [state.chats]);
 
   const openChat = useCallback((chatId: string) => {
     setState((current) => {
@@ -76,7 +128,7 @@ export function useMessagingStore(selfUserId: string): MessagingStore {
   ) => {
     const normalizedText = text.trim();
     const chat = stateRef.current.chats.find((item) => item.id === chatId);
-    if (!chat || !normalizedText) {
+    if (!chat || !normalizedText || chat.isBlocked) {
       return null;
     }
 
@@ -180,12 +232,26 @@ export function useMessagingStore(selfUserId: string): MessagingStore {
     sendMessage(savedChat.id, getMessageText(sourceMessage));
   }, [sendMessage]);
 
-  const createChat: MessagingStore['createChat'] = useCallback((name, color) => {
-    const chat = createDirectChat(name, color);
+  const createChat: MessagingStore['createChat'] = useCallback((
+    name,
+    color,
+    type,
+    participantIds,
+  ) => {
+    const chat = createNewChat(name, color, type, participantIds);
+    const participantSuffix = chat.participantIds.length > 0
+      ? ` Участников: ${chat.participantIds.length}.`
+      : '';
+    const initialText = chat.type === 'group'
+      ? `Группа «${chat.title}» создана.${participantSuffix}`
+      : chat.type === 'channel'
+        ? `Канал «${chat.title}» создан.${participantSuffix}`
+        : `Диалог с ${chat.title} создан. Напишите первое сообщение.`;
     const initialMessage = createTextMessage({
       chatId: chat.id,
       senderId: chat.peerId ?? `peer:${chat.id}`,
-      text: `Диалог с ${chat.title} создан. Напишите первое сообщение.`,
+      senderType: 'system',
+      text: initialText,
       isOutgoing: false,
       sentAt: chat.createdAt,
     });
@@ -195,6 +261,46 @@ export function useMessagingStore(selfUserId: string): MessagingStore {
     }));
     return chat;
   }, []);
+
+  const createMatchedChat: MessagingStore['createMatchedChat'] = useCallback((
+    name,
+    color,
+    transcript,
+  ) => {
+    const chat = createNewChat(name, color, 'direct');
+    const firstTranscriptTime = transcript[0]?.sentAt;
+    const welcomeSentAt = firstTranscriptTime
+      ? new Date(Date.parse(firstTranscriptTime) - 1).toISOString()
+      : chat.createdAt;
+    const welcomeMessage = createTextMessage({
+      chatId: chat.id,
+      senderId: 'system',
+      senderType: 'system',
+      text: 'Вы продолжили общение после комнаты ожидания.',
+      isOutgoing: false,
+      deliveryState: 'read',
+      sentAt: welcomeSentAt,
+    });
+    const transcriptMessages = transcript
+      .filter((entry) => entry.text.trim())
+      .map((entry) => createTextMessage({
+        chatId: chat.id,
+        senderId: entry.isOutgoing ? selfUserId : chat.peerId ?? `peer:${chat.id}`,
+        text: entry.text,
+        isOutgoing: entry.isOutgoing,
+        deliveryState: 'read',
+        sentAt: entry.sentAt,
+      }));
+    const updatedAt = transcriptMessages[transcriptMessages.length - 1]?.sentAt
+      ?? chat.createdAt;
+    const completedChat = { ...chat, updatedAt };
+
+    setState((current) => ({
+      chats: [...current.chats, completedChat],
+      messages: [...current.messages, welcomeMessage, ...transcriptMessages],
+    }));
+    return completedChat;
+  }, [selfUserId]);
 
   const clearChat: MessagingStore['clearChat'] = useCallback((chatId) => {
     setState((current) => ({
@@ -216,6 +322,74 @@ export function useMessagingStore(selfUserId: string): MessagingStore {
     });
   }, []);
 
+  const blockChat: MessagingStore['blockChat'] = useCallback((chatId) => {
+    setState((current) => ({
+      ...current,
+      chats: current.chats.map((chat) =>
+        chat.id === chatId && chat.type === 'direct'
+          ? { ...chat, isBlocked: true, isOnline: false }
+          : chat),
+    }));
+  }, []);
+
+  const reportSpam: MessagingStore['reportSpam'] = useCallback((chatId) => {
+    void messagingApi.reportSpam(chatId).catch(() => {
+      // Пока backend не подключён, локальное состояние всё равно закрывает spam-плашку
+    });
+    setState((current) => ({
+      ...current,
+      chats: current.chats.map((chat) =>
+        chat.id === chatId && chat.type === 'direct'
+          ? {
+              ...chat,
+              isPotentialSpam: true,
+              isSpamReported: true,
+              isBlocked: true,
+              isOnline: false,
+            }
+          : chat),
+    }));
+  }, []);
+
+  const toggleChatPinned: MessagingStore['toggleChatPinned'] = useCallback((chatId) => {
+    const currentChat = stateRef.current.chats.find((chat) => chat.id === chatId);
+    updateChatPreference(chatId, { isPinned: !currentChat?.isPinned });
+    setState((current) => ({
+      ...current,
+      chats: current.chats.map((chat) =>
+        chat.id === chatId ? { ...chat, isPinned: !chat.isPinned } : chat),
+    }));
+  }, []);
+
+  const muteChat: MessagingStore['muteChat'] = useCallback((chatId, durationMs) => {
+    const mutedUntil = durationMs === undefined
+      ? null
+      : new Date(Date.now() + durationMs).toISOString();
+    updateChatPreference(chatId, { isMuted: true, mutedUntil });
+    setState((current) => ({
+      ...current,
+      chats: current.chats.map((chat) =>
+        chat.id === chatId
+          ? {
+              ...chat,
+              isMuted: true,
+              mutedUntil,
+            }
+          : chat),
+    }));
+  }, []);
+
+  const unmuteChat: MessagingStore['unmuteChat'] = useCallback((chatId) => {
+    updateChatPreference(chatId, { isMuted: false, mutedUntil: null });
+    setState((current) => ({
+      ...current,
+      chats: current.chats.map((chat) =>
+        chat.id === chatId
+          ? { ...chat, isMuted: false, mutedUntil: null }
+          : chat),
+    }));
+  }, []);
+
   return useMemo(() => ({
     state,
     openChat,
@@ -225,18 +399,30 @@ export function useMessagingStore(selfUserId: string): MessagingStore {
     reactToMessage,
     saveMessage,
     createChat,
+    createMatchedChat,
     clearChat,
     deleteChat,
+    blockChat,
+    reportSpam,
+    toggleChatPinned,
+    muteChat,
+    unmuteChat,
   }), [
+    blockChat,
     clearChat,
     createChat,
+    createMatchedChat,
     deleteChat,
     deleteMessage,
     editMessage,
     openChat,
     reactToMessage,
+    reportSpam,
     saveMessage,
     sendMessage,
     state,
+    muteChat,
+    toggleChatPinned,
+    unmuteChat,
   ]);
 }

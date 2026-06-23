@@ -462,7 +462,7 @@ const SignUp: React.FC<SignUpProps> = ({ onComplete }) => {
                       onChange={(event) => updateField('name', event.target.value)}
                       placeholder="Как вас зовут?"
                       autoComplete="name"
-                      autoFocus
+                      enterKeyHint="next"
                       maxLength={40}
                     />
                   </label>
@@ -478,6 +478,7 @@ const SignUp: React.FC<SignUpProps> = ({ onComplete }) => {
                         placeholder="Выберите никнейм"
                         autoCapitalize="none"
                         autoComplete="username"
+                        enterKeyHint="next"
                         maxLength={24}
                       />
                     </div>
@@ -496,7 +497,7 @@ const SignUp: React.FC<SignUpProps> = ({ onComplete }) => {
                       value={form.birthDate}
                       placeholder="ДД.ММ.ГГГГ"
                       onChange={(event) => updateField('birthDate', event.target.value)}
-                      autoFocus
+                      enterKeyHint="next"
                       maxLength={10}
                     />
                   </label>
@@ -509,6 +510,7 @@ const SignUp: React.FC<SignUpProps> = ({ onComplete }) => {
                       onChange={(event) => updateField('city', event.target.value)}
                       placeholder="Например, Москва"
                       autoComplete="address-level2"
+                      enterKeyHint="next"
                       maxLength={60}
                     />
                   </label>
@@ -523,7 +525,7 @@ const SignUp: React.FC<SignUpProps> = ({ onComplete }) => {
                     value={form.bio}
                     onChange={(event) => updateField('bio', event.target.value)}
                     placeholder="Чем вы увлекаетесь?"
-                    autoFocus
+                    enterKeyHint="done"
                     maxLength={180}
                     rows={5}
                   />
@@ -539,7 +541,7 @@ const SignUp: React.FC<SignUpProps> = ({ onComplete }) => {
                       if (!canvasItem) {
                         return (
                           <span
-                            className="signup-interest-placeholder"
+                            className={`signup-interest-placeholder${interestLimitReached ? ' is-visible' : ''}`}
                             key={`placeholder:${slot}`}
                             aria-hidden="true"
                           />

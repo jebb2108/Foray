@@ -18,8 +18,11 @@ import {
   copyOutline,
   createOutline,
   ellipsisHorizontalOutline,
+  flagOutline,
+  logOutOutline,
   paperPlane,
   returnUpBackOutline,
+  shareSocialOutline,
   trashOutline,
 } from '../../../shared/icons';
 import { useHistory, useParams } from 'react-router-dom';
@@ -50,6 +53,7 @@ interface ChatConversationProps {
   onSaveMessage: (message: ForayMessage) => void;
   onClearChat: (chatId: string) => void;
   onDeleteChat: (chatId: string) => void;
+  onReportSpam: (chatId: string) => void;
 }
 
 interface ChatParams {
@@ -66,6 +70,45 @@ function createReplyReference(message: ForayMessage): MessageReplyReference {
   };
 }
 
+function chatSubtitle(chat: Chat): string | null {
+  if (chat.isBlocked) {
+    return 'заблокирован';
+  }
+  if (chat.type === 'saved') {
+    return 'Личные заметки';
+  }
+  if (chat.type === 'group') {
+    return formatMemberCount(chat.participantIds.length + 1, 'участник', 'участника', 'участников');
+  }
+  if (chat.type === 'channel') {
+    return formatMemberCount(
+      chat.participantIds.length + 1,
+      'подписчик',
+      'подписчика',
+      'подписчиков',
+    );
+  }
+  return chat.isOnline ? 'в сети' : 'был(а) недавно';
+}
+
+function formatMemberCount(
+  count: number,
+  one: string,
+  few: string,
+  many: string,
+): string {
+  const lastTwoDigits = count % 100;
+  const lastDigit = count % 10;
+  const suffix = lastTwoDigits >= 11 && lastTwoDigits <= 14
+    ? many
+    : lastDigit === 1
+      ? one
+      : lastDigit >= 2 && lastDigit <= 4
+        ? few
+        : many;
+  return `${count} ${suffix}`;
+}
+
 export default function ChatConversation({
   chats,
   messages,
@@ -77,6 +120,7 @@ export default function ChatConversation({
   onSaveMessage,
   onClearChat,
   onDeleteChat,
+  onReportSpam,
 }: ChatConversationProps) {
   const history = useHistory();
   const { chatId } = useParams<ChatParams>();
@@ -109,6 +153,20 @@ export default function ChatConversation({
       ...pendingMessages.filter((message) => !storedIds.has(message.id)),
     ];
   }, [pendingMessages, storedMessages]);
+  const firstRealMessage = useMemo(
+    () => visibleMessages.find((message) => message.sender.type !== 'system'),
+    [visibleMessages],
+  );
+  const showSpamReportBanner = Boolean(
+    chat
+    && chat.type === 'direct'
+    && !chat.isContact
+    && chat.isIncomingRequest
+    && !chat.isSpamReported
+    && !chat.isBlocked
+    && firstRealMessage
+    && !firstRealMessage.isOutgoing,
+  );
 
   useEffect(() => {
     if (chat) {
@@ -165,7 +223,7 @@ export default function ChatConversation({
 
   const submitMessage = (event: FormEvent) => {
     event.preventDefault();
-    if (!text.trim()) {
+    if (!text.trim() || chat.isBlocked) {
       return;
     }
 
@@ -277,6 +335,31 @@ export default function ChatConversation({
     setSelectedMessage(null);
   };
 
+  const shareCommunity = async () => {
+    const communityType = chat.type === 'channel' ? 'канал' : 'группу';
+    const textToShare = `Присоединяйтесь в ${communityType} «${chat.title}» в Foray`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: chat.title,
+          text: textToShare,
+          url: window.location.href,
+        });
+      } else {
+        await copyText(`${textToShare}\n${window.location.href}`);
+      }
+      setShowMenu(false);
+    } catch {
+      // Закрытие системного меню отправки не меняет состояние чата
+    }
+  };
+
+  const leaveCommunity = () => {
+    onDeleteChat(chat.id);
+    setShowMenu(false);
+    history.replace('/chats');
+  };
+
   return (
     <IonPage className="messenger-page conversation-page">
       <IonContent fullscreen>
@@ -290,7 +373,15 @@ export default function ChatConversation({
             </span>
             <span className="conversation-header__title">
               <strong>{chat.title}</strong>
-              <small>{chat.type === 'saved' ? 'Личные заметки' : 'был(а) недавно'}</small>
+              {chatSubtitle(chat) && (
+                <small className={chat.type === 'direct'
+                  ? chat.isOnline
+                    ? 'online-status'
+                    : 'offline-status'
+                  : ''}>
+                  {chatSubtitle(chat)}
+                </small>
+              )}
             </span>
             <button type="button" aria-label="Меню чата" onClick={() => setShowMenu(true)}>
               <IonIcon icon={ellipsisHorizontalOutline} />
@@ -303,6 +394,14 @@ export default function ChatConversation({
             ref={messagesRef}
           >
             <span className="conversation-date">Сегодня</span>
+            {showSpamReportBanner && (
+              <div className="spam-report-banner">
+                <span>Пользователь не из ваших контактов написал первым.</span>
+                <button type="button" onClick={() => onReportSpam(chat.id)}>
+                  Пожаловаться на спам
+                </button>
+              </div>
+            )}
             {visibleMessages.map((message) => {
               const messageText = getMessageText(message);
               const selectedReaction = getSelectedReaction(message);
@@ -310,6 +409,7 @@ export default function ChatConversation({
                 <div
                   className={[
                     'message-bubble',
+                    message.sender.type === 'system' ? 'is-system' : '',
                     message.isOutgoing ? 'is-mine' : 'is-other',
                     selectedReaction ? 'has-reaction' : '',
                   ].filter(Boolean).join(' ')}
@@ -391,11 +491,16 @@ export default function ChatConversation({
             <input
               value={text}
               onChange={(event) => setText(event.target.value)}
-              placeholder={chat.type === 'saved' ? 'Новая заметка' : 'Сообщение'}
+              placeholder={chat.isBlocked
+                ? 'Пользователь заблокирован'
+                : chat.type === 'saved'
+                  ? 'Новая заметка'
+                  : 'Сообщение'}
+              disabled={chat.isBlocked}
               aria-label="Текст сообщения"
               autoComplete="off"
             />
-            <button type="submit" disabled={!text.trim()} aria-label="Отправить">
+            <button type="submit" disabled={chat.isBlocked || !text.trim()} aria-label="Отправить">
               <IonIcon icon={paperPlane} />
             </button>
           </form>
@@ -412,22 +517,46 @@ export default function ChatConversation({
               <header>
                 <div>
                   <span>{chat.title}</span>
-                  <small>Управление диалогом</small>
+                  <small>
+                    {chat.type === 'group'
+                      ? 'Управление группой'
+                      : chat.type === 'channel'
+                        ? 'Управление каналом'
+                        : 'Управление диалогом'}
+                  </small>
                 </div>
                 <button type="button" onClick={() => setShowMenu(false)} aria-label="Закрыть">
                   <IonIcon icon={closeOutline} />
                 </button>
               </header>
-              <button
-                type="button"
-                onClick={() => {
-                  onClearChat(chat.id);
-                  setShowMenu(false);
-                }}
-              >
-                Очистить историю
-              </button>
-              {chat.type !== 'saved' && (
+              {(chat.type === 'group' || chat.type === 'channel') && (
+                <button type="button" onClick={shareCommunity}>
+                  <IonIcon icon={shareSocialOutline} />
+                  Поделиться
+                </button>
+              )}
+              {(chat.type === 'group' || chat.type === 'channel') ? (
+                <button type="button" onClick={() => setShowMenu(false)}>
+                  <IonIcon icon={flagOutline} />
+                  Пожаловаться
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClearChat(chat.id);
+                    setShowMenu(false);
+                  }}
+                >
+                  Очистить историю
+                </button>
+              )}
+              {(chat.type === 'group' || chat.type === 'channel') ? (
+                <button type="button" className="is-danger" onClick={leaveCommunity}>
+                  <IonIcon icon={logOutOutline} />
+                  {chat.type === 'channel' ? 'Покинуть канал' : 'Покинуть группу'}
+                </button>
+              ) : chat.type !== 'saved' && (
                 <button
                   type="button"
                   className="is-danger"

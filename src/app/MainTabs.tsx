@@ -42,7 +42,11 @@ export default function MainTabs({
     <IonTabs className="main-tabs">
       <IonRouterOutlet animated={false}>
         <Route exact path="/waiting">
-          <WaitingRoom user={user} />
+          <WaitingRoom
+            user={user}
+            onCreateMatchedChat={messaging.createMatchedChat}
+            onSaveMessage={messaging.saveMessage}
+          />
         </Route>
         <Route exact path="/chats">
           <Chats
@@ -50,6 +54,10 @@ export default function MainTabs({
             chats={chats}
             messages={messages}
             onCreateChat={messaging.createChat}
+            onDeleteChat={messaging.deleteChat}
+            onToggleChatPinned={messaging.toggleChatPinned}
+            onMuteChat={messaging.muteChat}
+            onUnmuteChat={messaging.unmuteChat}
           />
         </Route>
         <Route exact path="/chats/:chatId">
@@ -64,6 +72,7 @@ export default function MainTabs({
             onSaveMessage={messaging.saveMessage}
             onClearChat={messaging.clearChat}
             onDeleteChat={messaging.deleteChat}
+            onReportSpam={messaging.reportSpam}
           />
         </Route>
         <Route exact path="/profile">
@@ -83,7 +92,7 @@ export default function MainTabs({
       >
         <IonTabButton tab="waiting" href="/waiting">
           <IonIcon icon={peopleOutline} />
-          <IonLabel>Ожидание</IonLabel>
+          <IonLabel>Комната</IonLabel>
         </IonTabButton>
         <IonTabButton tab="chats" href="/chats">
           <IonIcon icon={chatbubblesOutline} />

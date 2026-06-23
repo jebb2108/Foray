@@ -13,6 +13,7 @@ import {
   readJsonStorage,
   writeJsonStorage,
 } from '../../../shared/storage/jsonStorage';
+import { applyChatPreferences } from './chatPreferencesRepository';
 import { Chat } from '../model/chat';
 import {
   createTextMessage,
@@ -120,7 +121,17 @@ function createChat(
     title,
     avatar: { initials, color },
     peerId: type === 'direct' ? `peer:${id}` : undefined,
+    participantIds: [],
     unreadCount,
+    isOnline: type === 'direct' && (id === 'anna' || id === 'sofia'),
+    isPinned: false,
+    isMuted: false,
+    mutedUntil: null,
+    isContact: type !== 'direct' || id !== 'anna',
+    isIncomingRequest: type === 'direct' && id === 'anna',
+    isPotentialSpam: false,
+    isSpamReported: false,
+    isBlocked: false,
     createdAt: updatedAt,
     updatedAt,
   };
@@ -261,16 +272,51 @@ function normalizeCanonicalChat(value: unknown): Chat | null {
   }
 
   const updatedAt = normalizeIsoDate(value.updatedAt);
+  const type: Chat['type'] =
+    value.type === 'saved'
+    || value.type === 'group'
+    || value.type === 'channel'
+      ? value.type
+      : 'direct';
+  const rawMutedUntil = asTrimmedString(value.mutedUntil);
+  const mutedUntilTimestamp = rawMutedUntil ? Date.parse(rawMutedUntil) : Number.NaN;
+  const mutedUntil = Number.isFinite(mutedUntilTimestamp)
+    ? new Date(mutedUntilTimestamp).toISOString()
+    : null;
+  const isMuted = asBoolean(value.isMuted)
+    && (mutedUntil === null || mutedUntilTimestamp > Date.now());
+
   return {
     id,
-    type: value.type === 'saved' ? 'saved' : 'direct',
+    type,
     title,
     avatar: {
       initials: asTrimmedString(avatar.initials, title.slice(0, 1).toUpperCase()),
       color: asTrimmedString(avatar.color, '#607a52'),
     },
-    peerId: asString(value.peerId).trim() || undefined,
+    peerId: type === 'direct'
+      ? asTrimmedString(value.peerId, `peer:${id}`)
+      : undefined,
+    participantIds: [...new Set(
+      asArray(value.participantIds)
+        .filter((participantId): participantId is string =>
+          typeof participantId === 'string')
+        .map((participantId) => participantId.trim())
+        .filter(Boolean),
+    )],
     unreadCount: asNonNegativeInteger(value.unreadCount),
+    isOnline: type === 'direct' && asBoolean(
+      value.isOnline,
+      id === 'anna' || id === 'sofia' || id.startsWith('chat:'),
+    ),
+    isPinned: asBoolean(value.isPinned),
+    isMuted,
+    mutedUntil: isMuted ? mutedUntil : null,
+    isContact: type !== 'direct' || asBoolean(value.isContact, true),
+    isIncomingRequest: type === 'direct' && asBoolean(value.isIncomingRequest),
+    isPotentialSpam: type === 'direct' && asBoolean(value.isPotentialSpam),
+    isSpamReported: type === 'direct' && asBoolean(value.isSpamReported),
+    isBlocked: type === 'direct' && asBoolean(value.isBlocked),
     createdAt: normalizeIsoDate(value.createdAt, updatedAt),
     updatedAt,
   };
@@ -347,7 +393,17 @@ function migrateLegacyState(value: unknown, selfUserId: string): MessagingState 
         color: asTrimmedString(legacyChat.color, '#607a52'),
       },
       peerId: type === 'direct' ? `peer:${id}` : undefined,
+      participantIds: [],
       unreadCount: asNonNegativeInteger(legacyChat.unread),
+      isOnline: false,
+      isPinned: false,
+      isMuted: false,
+      mutedUntil: null,
+      isContact: type !== 'direct',
+      isIncomingRequest: false,
+      isPotentialSpam: false,
+      isSpamReported: false,
+      isBlocked: false,
       createdAt: lastSentAt,
       updatedAt: lastSentAt,
     });
@@ -399,7 +455,7 @@ export function loadMessagingState(selfUserId: string): MessagingState {
     const state = normalizeCanonicalState(stored.data);
     if (state) {
       saveMessagingState(state);
-      return state;
+      return { ...state, chats: applyChatPreferences(state.chats) };
     }
   }
 
@@ -407,19 +463,33 @@ export function loadMessagingState(selfUserId: string): MessagingState {
   const migrated = migrateLegacyState(readJsonStorage(LEGACY_STORAGE_KEY), selfUserId);
   const state = migrated ?? defaultState(selfUserId);
   saveMessagingState(state);
-  return state;
+  return { ...state, chats: applyChatPreferences(state.chats) };
 }
 
 export function saveMessagingState(state: MessagingState): void {
-  writeJsonStorage(STORAGE_KEY, createEnvelope(SCHEMA_VERSION, state));
+  const serverBackedState: MessagingState = {
+    ...state,
+    chats: state.chats.map((chat) => ({
+      ...chat,
+      isPinned: false,
+      isMuted: false,
+      mutedUntil: null,
+    })),
+  };
+  writeJsonStorage(STORAGE_KEY, createEnvelope(SCHEMA_VERSION, serverBackedState));
 }
 
-export function createDirectChat(name: string, color: string): Chat {
+export function createNewChat(
+  name: string,
+  color: string,
+  type: Exclude<Chat['type'], 'saved'> = 'direct',
+  participantIds: string[] = [],
+): Chat {
   const timestamp = nowIso();
   const id = createId('chat');
   return {
     id,
-    type: 'direct',
+    type,
     title: name.trim(),
     avatar: {
       initials: name
@@ -430,8 +500,20 @@ export function createDirectChat(name: string, color: string): Chat {
         .join(''),
       color,
     },
-    peerId: `peer:${id}`,
+    peerId: type === 'direct' ? `peer:${id}` : undefined,
+    participantIds: type === 'direct'
+      ? []
+      : [...new Set(participantIds.map((participantId) => participantId.trim()).filter(Boolean))],
     unreadCount: 0,
+    isOnline: type === 'direct',
+    isPinned: false,
+    isMuted: false,
+    mutedUntil: null,
+    isContact: type !== 'direct',
+    isIncomingRequest: false,
+    isPotentialSpam: false,
+    isSpamReported: false,
+    isBlocked: false,
     createdAt: timestamp,
     updatedAt: timestamp,
   };

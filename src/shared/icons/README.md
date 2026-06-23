@@ -10,6 +10,7 @@
 - arrow-back-outline
 - bookmark-outline
 - chatbubbles-outline
+- chat-pin
 - checkmark-done-outline
 - checkmark-outline
 - chevron-down-outline
@@ -20,16 +21,21 @@
 - copy-outline
 - create-outline
 - ellipsis-horizontal-outline
+- flag-outline
 - location-outline
 - lock-closed-outline
 - log-out-outline
+- megaphone-outline
+- notifications-off-outline
 - notifications-outline
 - paper-plane
 - people-outline
+- pin-outline
 - person-circle-outline
 - person-outline
 - return-up-back-outline
 - search-outline
+- share-social-outline
 - shield-checkmark-outline
 - trash-outline
 

@@ -318,6 +318,13 @@ $signup-border: #d2d5c5;
 .signup-interest-placeholder {
   height: 48px;
   visibility: hidden;
+
+  &.is-visible {
+    visibility: visible;
+    border: 1px solid $signup-border;
+    border-radius: 14px;
+    background: transparent;
+  }
 }
 
 .signup-error {

@@ -1,4 +1,10 @@
-import { FormEvent, useEffect, useState } from 'react';
+import {
+  FormEvent,
+  PointerEvent as ReactPointerEvent,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { IonContent, IonIcon, IonPage } from '@ionic/react';
 import {
   arrowBackOutline,
@@ -10,7 +16,7 @@ import {
   personOutline,
   shieldCheckmarkOutline,
 } from '../../../shared/icons';
-import { INTEREST_TOPIC_BY_ID } from '../data/interests';
+import { INTEREST_GROUPS, INTEREST_TOPIC_BY_ID } from '../data/interests';
 import { ProfileSettings } from '../model/settings';
 import { UserProfile, UserProfileChanges } from '../model/userProfile';
 import {
@@ -54,12 +60,16 @@ export default function Profile({
   const [isEditing, setIsEditing] = useState(false);
   const [panel, setPanel] = useState<ProfilePanel>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [interestCategoryIndex, setInterestCategoryIndex] = useState(0);
   const [settings, setSettings] = useState<ProfileSettings>(() => loadProfileSettings());
+  const interestSwipeStart = useRef<{ x: number; y: number } | null>(null);
   const [draft, setDraft] = useState({
     name: user.name,
     username: user.username,
     city: user.city,
     bio: user.bio,
+    interestIds: user.interestIds,
   });
 
   useEffect(() => {
@@ -72,13 +82,25 @@ export default function Profile({
       username: user.username,
       city: user.city,
       bio: user.bio,
+      interestIds: user.interestIds,
     });
+    setProfileError('');
+    const selectedGroupIndex = INTEREST_GROUPS.findIndex((group) =>
+      group.subgroups.some((subgroup) =>
+        subgroup.topics.some((topic) => user.interestIds.includes(topic.id))));
+    setInterestCategoryIndex(Math.max(0, selectedGroupIndex));
     setIsEditing(true);
   };
 
   const saveProfile = (event: FormEvent) => {
     event.preventDefault();
     if (!draft.name.trim() || !draft.username.trim()) {
+      setProfileError('Заполните имя и никнейм.');
+      return;
+    }
+
+    if (draft.interestIds.length < 3 || draft.interestIds.length > 6) {
+      setProfileError('Выберите от 3 до 6 интересов.');
       return;
     }
 
@@ -87,8 +109,50 @@ export default function Profile({
       username: draft.username.trim().replace(/^@/, ''),
       city: draft.city.trim(),
       bio: draft.bio.trim(),
+      interestIds: draft.interestIds,
     });
+    setProfileError('');
     setIsEditing(false);
+  };
+
+  const toggleProfileInterest = (interestId: string) => {
+    setDraft((current) => {
+      const selected = current.interestIds.includes(interestId);
+      if (!selected && current.interestIds.length >= 6) {
+        return current;
+      }
+
+      return {
+        ...current,
+        interestIds: selected
+          ? current.interestIds.filter((id) => id !== interestId)
+          : [...current.interestIds, interestId],
+      };
+    });
+    setProfileError('');
+  };
+
+  const startInterestSwipe = (event: ReactPointerEvent<HTMLDivElement>) => {
+    interestSwipeStart.current = { x: event.clientX, y: event.clientY };
+  };
+
+  const finishInterestSwipe = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const start = interestSwipeStart.current;
+    interestSwipeStart.current = null;
+    if (!start) {
+      return;
+    }
+
+    const deltaX = event.clientX - start.x;
+    const deltaY = event.clientY - start.y;
+    if (Math.abs(deltaX) < 45 || Math.abs(deltaX) <= Math.abs(deltaY)) {
+      return;
+    }
+
+    setInterestCategoryIndex((current) =>
+      deltaX < 0
+        ? Math.min(INTEREST_GROUPS.length - 1, current + 1)
+        : Math.max(0, current - 1));
   };
 
   const toggleSetting = (key: keyof ProfileSettings) => {
@@ -193,6 +257,72 @@ export default function Profile({
                   maxLength={60}
                 />
               </label>
+              <details className="profile-interest-editor">
+                <summary>
+                  <span>
+                    <strong>Интересы</strong>
+                    <small>Выберите от 3 до 6</small>
+                  </span>
+                  <span>{draft.interestIds.length} из 6</span>
+                </summary>
+                <div className="profile-interest-editor__content">
+                  <div
+                    className="profile-interest-pagination"
+                    aria-label={`Категория ${interestCategoryIndex + 1} из ${INTEREST_GROUPS.length}`}
+                  >
+                    {INTEREST_GROUPS.map((group, index) => (
+                      <button
+                        type="button"
+                        key={group.id}
+                        className={index === interestCategoryIndex ? 'is-active' : ''}
+                        onClick={() => setInterestCategoryIndex(index)}
+                        aria-label={`Открыть категорию ${topicName(group.name)}`}
+                        aria-current={index === interestCategoryIndex ? 'step' : undefined}
+                      />
+                    ))}
+                  </div>
+                  <div
+                    className="profile-interest-category-page"
+                    onPointerDown={startInterestSwipe}
+                    onPointerUp={finishInterestSwipe}
+                    onPointerCancel={() => {
+                      interestSwipeStart.current = null;
+                    }}
+                  >
+                    {(() => {
+                      const group = INTEREST_GROUPS[interestCategoryIndex];
+                      return (
+                        <section className="profile-interest-category" key={group.id}>
+                          <h3>{topicName(group.name)}</h3>
+                          {group.subgroups.map((subgroup) => (
+                            <div className="profile-interest-subgroup" key={subgroup.id}>
+                              <span>{topicName(subgroup.name)}</span>
+                              <div>
+                                {subgroup.topics.map((interest) => {
+                                  const selected = draft.interestIds.includes(interest.id);
+                                  const disabled = !selected && draft.interestIds.length >= 6;
+                                  return (
+                                    <button
+                                      type="button"
+                                      key={interest.id}
+                                      className={selected ? 'is-selected' : ''}
+                                      disabled={disabled}
+                                      aria-pressed={selected}
+                                      onClick={() => toggleProfileInterest(interest.id)}
+                                    >
+                                      {topicName(interest.id)}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </section>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </details>
               <label>
                 <span>О себе</span>
                 <textarea
@@ -202,6 +332,9 @@ export default function Profile({
                   rows={5}
                 />
               </label>
+              {profileError && (
+                <p className="profile-editor__error" role="alert">{profileError}</p>
+              )}
             </form>
           </div>
         )}
